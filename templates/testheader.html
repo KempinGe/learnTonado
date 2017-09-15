@@ -1,15 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
 <!--<script>alert("hhh")</script>-->
+    <script src="/static/js/jquery.min.js"></script>
+    <script src="/static/plugins/bootstrap/js/bootstrap.min.js"></script>
+    <script src="/static/js/index.js"></script>
+<script>
+ <!--用正则在获取cookie中的值-->
+    function getCookie(name){
+        var cookie = document.cookie.match('\\b' + name + '=([^;]*)\\b');
+        return cookie ? cookie[1] : undefind;
+    }
+</script>
 <head>
     <meta charset="UTF-8">
     <title>tst</title>
     <form method="post">
+        {% module xsrf_form_html() %}
         <textarea name="test"></textarea>
         <input type="submit" value="提交">
     </form>
-    <!--{{text}}-->
-    {% raw text %}
+
 </head>
 <body>
 

@@ -37,51 +37,53 @@ class MainHandle(RequestHandler):
     #     pass
 
     def get(self, *args, **kwargs):
-        self.write('hah')
+        pass
 
     def post(self, *args, **kwargs):
         # self.write(self.get_cookie('gekaibin'))
         pass
+
 class testHeader(RequestHandler):
 
     @gen.coroutine
     def get(self, *args, **kwargs):
-        result = yield executor.submit(TbUserInfo.select().where,TbUserInfo.ui_user == 1)
-        # self.render('testheader.html',text="")
-        # result = TbUserInfo.get(TbUserInfo.ui_user == 1) #同上一句查询
-        # print(help(result))
-        #cokkie是通过header(请求报头)传递参数过去  然后协议检测到之后就会增加一个键值对
-        # self.set_header('Set-Cookie','gekaibin = zhangdemei;path=/') #这样也能设置cookie
-        #secret_cookie是通过一个uuid混淆并用base64编码之后的一个值
-        self.set_secure_cookie('gekaibin','zhangdemei',expires=time.strptime('2017-09-18 12:00:00',"%Y-%m-%d %H:%M:%S"))
-        print(result.first().ui_user_name)
-        a = self.get_secure_cookie('gekaibin')
-        print(a)
-        self.write(a)
-    # def set_default_headers(self):
-    #     self.set_header('x-xss-protection',0)
-    #     self.set_header('X-XSS-Protection',0)
-#<script>alert("hhh")</script>
+        self.xsrf_token #可以直接获取到前端的Token值 如果没有会生成一个并设置到浏览器中
+        # result = yield executor.submit(TbUserInfo.select().where,TbUserInfo.ui_user == 1)
+        self.render('testheader.html')
+
+    @gen.coroutine
     def post(self, *args, **kwargs):
-        text = self.get_argument('test')
-        # self.set_header('x-xss-protection',0)
-        # self.set_header('X-XSS-Protection',0)
-        self.render('testheader.html',text=text)
+        print(self.request.headers)
+        self.write('post')
+
 
 class Application(web.Application):
     def __init__(self,*args,**kwargs):
         super(Application,self).__init__(*args,**kwargs)
-        self.db = PooledMySQLDatabase(database='TORNADO',max_connections=20,timeout=60,host='127.0.0.1',user='root',password='g123567G')
-            # torndb.Connection(host='127.0.0.1',database='TORNADO',user='root',password='g123567G')
+        #使用线程池连接mysql数据库
+        self.db = PooledMySQLDatabase(
+                database='TORNADO',
+                max_connections=20,timeout=60,
+                host='127.0.0.1',
+                user='root',
+                password='g123567G'
+        )
 
 
 if __name__ == '__main__':
     html_path = os.path.join(STATIC_PATH,'html')
     print(html_path)
+    settings = dict(
+            static_path=STATIC_PATH,
+            debug=True,
+            xsrf_cookies = True,
+            template_path=TEMPLATE_PATH,
+            cookie_secret='PQvw9USaSwWuPNrs6m6x/MsurHFz6UjGrqOXeK4GAoU=',
+    )
     #autoescape : 关闭返回的数据被自动转义  ,autoescape=None 是全局的
-    app = Application([(r'/testHeader',testHeader)
-        ,(r'/(.*)',StaticFileHandler,{'path': html_path,'default_filename':'index.html'})
-                           ],static_path=STATIC_PATH,debug=True,template_path=TEMPLATE_PATH,cookie_secret='PQvw9USaSwWuPNrs6m6x/MsurHFz6UjGrqOXeK4GAoU=')
+    app = Application([(r'/testHeader',testHeader),
+        (r'/(.*)',StaticFileHandler,{'path': html_path,'default_filename':'index.html'})
+                           ],**settings)
     http_server = httpserver.HTTPServer(app)
-    http_server.listen(8000)
+    http_server.listen(8887)
     ioloop.IOLoop.current().start()
